@@ -10,13 +10,15 @@ public class Lamp {
     private boolean lamp_state; //true=ON; false=OFF
     private String lamp_IP; //indirizzo IP della lampada
     private int brightness;
+    private int hue;
+    private int saturation;
+    private int mainAngle;
+    private int secondaryAngle;
 
     public Lamp(String lampURL, String lampName, int lampImageID) {
         this.lamp_IP = lampURL;
         this.lamp_name = lampName;
         this.lamp_image_ID = lampImageID;
-        this.lamp_state = false;
-        this.brightness = 0;
     }
 
     public String getLampName() {
@@ -53,5 +55,31 @@ public class Lamp {
 
     public void setBrightness(int brightness) {
         this.brightness = brightness;
+    }
+
+    public int getHue() { return hue; }
+
+    public void setHue(int hue) { this.hue = hue; }
+
+    public int getSaturation() { return saturation; }
+
+    public void setSaturation(int saturation) { this.saturation = saturation; }
+
+    public void setHueSat(int hue, int saturation) { this.hue = hue; this.saturation = saturation; }
+
+    public int getMainAngle() {
+        return mainAngle;
+    }
+
+    public void setMainAngle(int mainAngle) {
+        this.mainAngle = mainAngle;
+    }
+
+    public int getSecondaryAngle() {
+        return secondaryAngle;
+    }
+
+    public void setSecondaryAngle(int secondaryAngle) {
+        this.secondaryAngle = secondaryAngle;
     }
 }
