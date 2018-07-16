@@ -90,6 +90,7 @@
         android:layout_marginBottom="-30dp"
         android:paddingBottom="30dp"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:max="255"
         android:progress="50"
         android:thumb="@drawable/ic_brightness_high_black_down"
         android:thumbTint="@color/colorAccent"/>

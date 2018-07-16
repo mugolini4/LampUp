@@ -42,6 +42,8 @@ import com.truizlop.fabreveallayout.OnRevealChangeListener;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 public class LampDetailActivity extends AppCompatActivity implements GyroLampFragment.OnGyroLampFragmentInteractionListener {
 
@@ -77,17 +79,22 @@ public class LampDetailActivity extends AppCompatActivity implements GyroLampFra
     //private final int MAX_LUM = 255;
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (tcpClient != null) {
+            tcpClient.stopClient();
+            tcpClient = null;
+        }
+        if(connectTask != null && tcpClient == null){
+            connectTask.cancel(true);
+            connectTask = null;
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_lamp_detail );
-
-        switchOnOff = findViewById( R.id.switchOnOff );
-        color_picker = findViewById( R.id.sliders );
-        color = findViewById( R.id.secondary_view );
-        hue = findViewById( R.id.hue_slider );
-        saturation = findViewById( R.id.saturation_slider );
-        brightness = findViewById( R.id.brightness_slider );
-        brightness.setProgress( selectedLamp.getBrightness() );
 
         final Intent i = getIntent();
 
@@ -105,11 +112,19 @@ public class LampDetailActivity extends AppCompatActivity implements GyroLampFra
             }
         }
 
+        switchOnOff = findViewById( R.id.switchOnOff );
+        color_picker = findViewById( R.id.sliders );
+        color = findViewById( R.id.secondary_view );
+        hue = findViewById( R.id.hue_slider );
+        saturation = findViewById( R.id.saturation_slider );
+        brightness = findViewById( R.id.brightness_slider );
+        brightness.setProgress( selectedLamp.getBrightness() );
+
         //CONNECTION TCP
         tcpClient = new TCPClient( new TCPClient.OnMessageReceived() {
             @Override
             //here the messageReceived method is implemented
-            public void messageReceived(final String message) {
+            public void messageReceived( final String message ) {
                 //this method calls the onProgressUpdate
                 // Get a handler that can be used to post to the main thread
                 Handler mainHandler = new Handler( getApplicationContext().getMainLooper() );
@@ -117,17 +132,21 @@ public class LampDetailActivity extends AppCompatActivity implements GyroLampFra
                     @Override
                     public void run() {
 
-                        //Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
-                        Log.d( "message: ", message );
+                        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+                        //Log.d( "message: ", message );
 
-                        String[] cmd_rcv = message.split( "$" ); // "updateState$State[0|1]$Lum[0-255])$Hue[0-255]$Saturation[0-255]);
-                        if (cmd_rcv[0] == "updateState") {
-                            switch (cmd_rcv[1]) {
+                        String[] cmd_rcv = message.split( Pattern.quote( "$" ) ); // "updateState$State[0|1]$Lum[0-255])$Hue[0-255]$Saturation[0-255]);
+                        Log.e( "updateState string", cmd_rcv[0] );
+
+                        if (cmd_rcv[0].trim().equals("updateState")) {
+                            switch (cmd_rcv[1].trim()) {
                                 case "0": // la lamp è stata spenta manualmente dal sensore
+                                    Log.e( "CMD 0", "CASE 0, lamp spenta"+ cmd_rcv[1]);
                                     selectedLamp.turnOff(); // setta lo stato della lampada a spento
                                     switchOnOff.setChecked( selectedLamp.isOn() ); // setta a false lo switch
                                     break;
                                 case "1": // è cambiata la luminosità o è stata accesa la lamp (da sensore)
+                                    Log.e( "CMD 1", "CASE 1, lamp accesa"+ cmd_rcv[1] );
                                     if (!selectedLamp.isOn()) { // se era spenta
                                         selectedLamp.turnOn(); // setta lo stato della lampada a true
                                         switchOnOff.setChecked( selectedLamp.isOn() ); // setta a true lo switch
@@ -143,9 +162,10 @@ public class LampDetailActivity extends AppCompatActivity implements GyroLampFra
 
                                 default:
                                     Log.e( "CMD", "Comando ricevuto da arduino SCONOSCIUTO!" );
+                                    break;
                             }
                         } else {
-                            Log.e( "CMD", "Comando ricevuto da arduino SCONOSCIUTO!" );
+                            Log.e( "CMD", "Comando ricevuto da arduino NOT update" );
                         }
                         /*switch (cmd_rcv[0]) {
 
@@ -167,11 +187,9 @@ public class LampDetailActivity extends AppCompatActivity implements GyroLampFra
                                 }
                                 break;
                         }*/
-
                     } // This is your code
                 };
                 mainHandler.post( myRunnable );
-
             }
         }, selectedLamp.getLampIP() );
 
